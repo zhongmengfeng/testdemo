@@ -1,0 +1,57 @@
+
+public class MainActivity extends AppCompatActivity {
+
+    private static final float BEEP_VOLUME = 5;
+    MediaPlayer mediaPlayer;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
+        TextView tv = (TextView) findViewById(R.id.sample_text);
+        tv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+//                vibrator.vibrate(new long[]{300,500},0);//获取震动
+                //第一个参数，指代一个震动的频率数组。每两个为一组，每组的第一个为等待时间，第二个为震动时间。
+                //        比如  [2000,500,100,400],会先等待2000毫秒，震动500，再等待100，震动400
+                //第二个参数，repest指代从 第几个索引（第一个数组参数） 的位置开始循环震动。
+                //会一直保持循环，我们需要用 vibrator.cancel()主动终止
+                //vibrator.vibrate(new long[]{300,500},0);
+                mediaPlayer = getInstance(MainActivity.this);
+                mediaPlayer.start();
+            }
+        });
+
+
+    }
+    public MediaPlayer getInstance(Activity activity) {
+        MediaPlayer mediaPlayer = new MediaPlayer();
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        //注册事件。当播放完毕一次后，重新指向流文件的开头，以准备下次播放。
+        // When the beep has finished playing, rewind to queue up another one.
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer player) {
+                player.seekTo(0);
+            }
+        });
+        AssetFileDescriptor file = this.getResources().openRawResourceFd(R.raw.beep_once);
+        try {
+            mediaPlayer.setDataSource(file.getFileDescriptor(),
+                    file.getStartOffset(), file.getLength());
+            file.close();
+            mediaPlayer.setVolume(BEEP_VOLUME, BEEP_VOLUME);
+            mediaPlayer.prepare();
+        } catch (IOException ioe) {
+            mediaPlayer = null;
+        }
+
+        return mediaPlayer;
+    }
+
+
+ 
+}
